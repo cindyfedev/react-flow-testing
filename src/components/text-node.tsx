@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Handle, Position, useEdges } from "@xyflow/react";
 import { useFormContext, Controller } from "react-hook-form";
+import BasicCanvas from "./basic-canvas";
 
 // const handleStyle = { left: 10 };
 
@@ -128,6 +129,8 @@ function TextUpdaterNode({ data, isConnectable, setNodes }) {
           )}
         />
       </div>
+
+      <BasicCanvas />
 
       <Handle
         type="source"

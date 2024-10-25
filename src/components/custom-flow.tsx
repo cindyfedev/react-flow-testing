@@ -126,7 +126,7 @@ const CustomNodeFlow = () => {
         type: "textUpdater",
         position: { x: 200, y: -200 },
         data: { label: "testing" },
-        draggable: false,
+        //  draggable: false,
         deletable: false,
       },
       {
