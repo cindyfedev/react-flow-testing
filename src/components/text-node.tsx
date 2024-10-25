@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { useCallback, useEffect, useState } from "react";
+import { Handle, Position, useEdges } from "@xyflow/react";
 import { useFormContext, Controller } from "react-hook-form";
 
 // const handleStyle = { left: 10 };
@@ -11,7 +11,7 @@ import { useFormContext, Controller } from "react-hook-form";
 function TextUpdaterNode({ data, isConnectable, setNodes }) {
   const { register, control } = useFormContext(); // retrieve all hook methods
 
-  console.log(data, "what is data in TextUpdateNode");
+  // console.log(data, "what is data in TextUpdateNode");
   const [value, setValue] = useState(0);
   const onInputChange = useCallback((evt) => {
     setValue(evt.target.value);
@@ -25,6 +25,8 @@ function TextUpdaterNode({ data, isConnectable, setNodes }) {
   const handleSelectChange = (event) => {
     setSelectedFruit(event.target.value);
   };
+
+  // if selector is banana then add new node
 
   // You have to create a new data object on a node to notify React Flow about data changes.
 
@@ -58,7 +60,7 @@ function TextUpdaterNode({ data, isConnectable, setNodes }) {
               <input
                 id="text"
                 className="nodrag"
-                onChange={(v) => {
+                onChange={(e) => {
                   setNodes((nds) =>
                     nds.map((node) => {
                       if (node.id === "textnode-1") {
@@ -69,7 +71,7 @@ function TextUpdaterNode({ data, isConnectable, setNodes }) {
                           ...node,
                           data: {
                             ...node.data,
-                            label: field.value,
+                            label: e.target.value,
                           },
                         };
                       }
@@ -78,7 +80,7 @@ function TextUpdaterNode({ data, isConnectable, setNodes }) {
                     })
                   );
 
-                  field.onChange(v);
+                  field.onChange(e);
                 }}
                 value={field.value ?? ""}
               />

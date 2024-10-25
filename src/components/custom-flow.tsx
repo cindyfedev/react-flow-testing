@@ -4,6 +4,7 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  useReactFlow,
   MiniMap,
   Panel,
   Controls,
@@ -18,6 +19,10 @@ import TextUpdaterNode from "./text-node";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { CustomHandle } from "./custom-handle";
 import { Button } from "./submit-button";
+
+const flowKey = "example-flow";
+
+const getNodeId = () => `randomnode_${+new Date()}`;
 
 const initBgColor = "#888";
 
@@ -40,6 +45,9 @@ const CustomNodeFlow = () => {
 
   const methods = useForm();
 
+  const [rfInstance, setRfInstance] = useState(null);
+  const { setViewport, getNodes } = useReactFlow();
+
   // define nodeTypes inside to see if we can pass in extra props in the custom Node
 
   const nodeTypes = useMemo(
@@ -53,13 +61,17 @@ const CustomNodeFlow = () => {
     []
   );
 
-  const onSubmit = (data) =>
+  // This function handles deletion of nodes
+
+  const onSubmit = (data) => {
     console.log(data, "data on submit testing reat hook form");
+  };
 
   useEffect(() => {
     const onChange = (event) => {
       setNodes((nds) =>
         nds.map((node) => {
+          console.log(node, "what is node");
           if (node.id !== "2") {
             return node;
           }
@@ -109,10 +121,13 @@ const CustomNodeFlow = () => {
         targetPosition: "left",
       },
       {
+        // https://reactflow.dev/api-reference/types/node
         id: "textnode-1",
         type: "textUpdater",
-        position: { x: 100, y: -50 },
+        position: { x: 200, y: -200 },
         data: { label: "testing" },
+        draggable: false,
+        deletable: false,
       },
       {
         id: "handle-1",
@@ -157,27 +172,69 @@ const CustomNodeFlow = () => {
     []
   );
 
+  // https://reactflow.dev/examples/interaction/save-and-restore
+
+  const onSave = useCallback(() => {
+    if (rfInstance) {
+      const flow = rfInstance.toObject();
+      window.localStorage.setItem(flowKey, JSON.stringify(flow));
+    }
+  }, [rfInstance]);
+
+  const onRestore = useCallback(() => {
+    const restoreFlow = async () => {
+      const flow = JSON.parse(window.localStorage.getItem(flowKey));
+
+      if (flow) {
+        const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+        setNodes(flow.nodes || []);
+        setEdges(flow.edges || []);
+        setViewport({ x, y, zoom });
+      }
+    };
+
+    restoreFlow();
+  }, [setNodes, setViewport]);
+
+  const onAdd = useCallback(() => {
+    const newNode = {
+      id: getNodeId(),
+      data: { label: "Added node" },
+      position: {
+        x: (Math.random() - 0.5) * 400,
+        y: (Math.random() - 0.5) * 400,
+      },
+    };
+    setNodes((nds) => nds.concat(newNode));
+  }, [setNodes]);
+
   // ReactFlow cannot be wrapped inside form element - try wrapped in form provider and use form in each custom nodes ?
   // simply use raect flow provider
   // or we need to use Zustand to store the current form state ?
   return (
     <FormProvider {...methods}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        style={{ background: bgColor }}
-        nodeTypes={nodeTypes}
-        connectionLineStyle={connectionLineStyle}
-        snapToGrid={true}
-        snapGrid={snapGrid}
-        defaultViewport={defaultViewport}
-        fitView
-        attributionPosition="bottom-left"
+      <div
+        style={{ width: "100%", height: "100%" }}
+        //onKeyDown={onKeyDown}
+        tabIndex={0}
       >
-        {/* <MiniMap
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onInit={setRfInstance}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          style={{ background: bgColor }}
+          nodeTypes={nodeTypes}
+          connectionLineStyle={connectionLineStyle}
+          snapToGrid={true}
+          snapGrid={snapGrid}
+          defaultViewport={defaultViewport}
+          fitView
+          attributionPosition="bottom-left"
+        >
+          {/* <MiniMap
         nodeStrokeColor={(n) => {
           if (n.type === "input") return "#0041d0";
           if (n.type === "selectorNode") return bgColor;
@@ -189,11 +246,16 @@ const CustomNodeFlow = () => {
         }}
       /> */}
 
-        <Panel position="top-right">
-          <Button />
-        </Panel>
-        <Controls />
-      </ReactFlow>
+          <Panel position="top-right">
+            <Button />
+
+            <button onClick={onSave}>save</button>
+            <button onClick={onRestore}>restore</button>
+            <button onClick={onAdd}>add node</button>
+          </Panel>
+          <Controls showInteractive={false} />
+        </ReactFlow>
+      </div>
     </FormProvider>
   );
 };
